@@ -98,3 +98,29 @@ func (pr *ProductRepository) GetProduct(id int) (*model.Product, error) {
 	query.Close()
 	return &product, nil
 }
+
+func (pr *ProductRepository) UpdateProduct(id int, product *model.Product) (*model.Product, error) {
+	query, err := pr.connection.Prepare("UPDATE product" +
+		" SET product_name = $2, price = $3" +
+		" WHERE id = $1" +
+		" returning id")
+
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	err = query.QueryRow(id, product.Name, product.Price).Scan(&product.ID)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+
+		fmt.Println(err)
+		return nil, err
+	}
+
+	query.Close()
+	return product, nil
+}

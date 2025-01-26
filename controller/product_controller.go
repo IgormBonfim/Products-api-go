@@ -84,3 +84,45 @@ func (p *productController) GetProduct(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, product)
 }
+
+func (p *productController) UpdateProduct(ctx *gin.Context) {
+	id := ctx.Param("id")
+	if id == "" {
+		response := model.Response{
+			Message: "Product ID can't be null.",
+		}
+		ctx.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	productId, err := strconv.Atoi(id)
+	if err != nil {
+		response := model.Response{
+			Message: "Product ID must be a number.",
+		}
+		ctx.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	var product *model.Product
+	err = ctx.BindJSON(&product)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, err)
+		return
+	}
+
+	product, err = p.productUsecase.UpdateProduct(productId, product)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, err)
+	}
+
+	if product == nil {
+		response := model.Response{
+			Message: "Product not found.",
+		}
+		ctx.JSON(http.StatusNotFound, response)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, &product)
+}
